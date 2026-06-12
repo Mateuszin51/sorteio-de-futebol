@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteador de Futebol - 1x1 & 2x2</title>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-light: #4caf50;
+            --dark: #1b5e20;
+            --bg: #f4f7f4;
+            --card-bg: #ffffff;
+            --text: #212121;
+            --accent: #ff9800;
+        }
+
+        * {
+            box-shadow: none;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 4px solid var(--primary);
+            padding-bottom: 10px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        header h1 {
+            color: var(--dark);
+            text-transform: uppercase;
+            font-size: 2rem;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 25px;
+        }
+
+        /* Seleção de Modo */
+        .mode-selection {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .btn-mode {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 2px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-mode.active, .btn-mode:hover {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+        }
+
+        /* Configuração de Listas */
+        .setup-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 600px) {
+            .setup-section { grid-template-columns: 1fr; }
+        }
+
+        .input-group {
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .input-group h3 {
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .entry-field {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        button.btn-add {
+            padding: 10px 15px;
+            background: var(--primary-light);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            max-height: 120px;
+            overflow-y: auto;
+            padding: 5px;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+
+        .tag {
+            background: #e8f5e9;
+            color: var(--dark);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #c8e6c9;
+        }
+
+        .tag span {
+            cursor: pointer;
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        /* Área das Roletas */
+        .roulette-section {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-top: 1px solid #eee;
+        }
+
+        .roulette-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .roulette-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            color: var(--dark);
+        }
+
+        /* Canvas da Roleta */
+        .wheel-wrapper {
+            position: relative;
+            width: 200px;
+            height: 200px;
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid var(--accent);
+            z-index: 10;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: transform 2s cubic-bezier(0.1, 0.8, 0.3, 1);
+        }
+
+        /* Botão de Ação */
+        .action-area {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .btn-spin {
+            padding: 15px 50px;
+            font-size: 1.4rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .btn-spin:active {
+            transform: scale(0.95);
+        }
+
+        /* Painel de Resultados */
+        .results-panel {
+            background: #e8f5e9;
+            border: 2px dashed var(--primary);
+            border-radius: 8px;
+            padding: 20px;
+            display: none;
+        }
+
+        .results-panel h2 {
+            text-align: center;
+            color: var(--dark);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .matchup {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .team-box {
+            font-weight: bold;
+            color: var(--primary);
+            background: #f1f8e9;
+            padding: 3px 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🏆 Sorteador de Confrontos ⚽</h1>
+    </header>
+
+    <div class="container">
+        <!-- Escolha do Modo -->
+        <div class="mode-selection">
+            <button class="btn-mode active" id="btn1x1" onclick="setMode('1x1')">1 x 1</button>
+            <button class="btn-mode" id="btn2x2" onclick="setMode('2x2')">2 x 2</button>
+        </div>
+
+        <!-- Entrada de Dados -->
+        <div class="setup-section">
+            <div class="input-group">
+                <h3>🏃 Jogadores</h3>
+                <div class="entry-field">
+                    <input type="text" id="playerInput" placeholder="Nome do jogador" onkeypress="handleKeyPress(event, 'player')">
+                    <button class="btn-add" onclick="addEntry('player')">+</button>
+                </div>
+                <div class="tag-container" id="playersList"></div>
+            </div>
+
+            <div class="input-group">
+                <h3>🛡️ Times</h3>
+                <div class="entry-field">
+                    <input type="text" id="teamInput" placeholder="Nome do time" onkeypress="handleKeyPress(event, 'team')">
+                    <button class="btn-add" onclick="addEntry('team')">+</button>
+                </div>
+                <div class="tag-container" id="teamsList"></div>
+            </div>
+        </div>
+
+        <!-- Roletas -->
+        <div class="roulette-section">
+            <div class="roulette-container">
+                <div class="roulette-title">Jogadores</div>
+                <div class="wheel-wrapper">
+                    <div class="wheel-pointer"></div>
+                    <canvas id="wheelPlayers" width="200" height="200"></canvas>
+                </div>
+            </div>
+            <div class="roulette-container">
+                <div class="roulette-title">Times</div>
+                <div class="wheel-wrapper">
+                    <div class="wheel-pointer"></div>
+                    <canvas id="wheelTeams" width="200" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botão Girar -->
+        <div class="action-area">
+            <button class="btn-spin" onclick="spinAndDraw()">Sortear!</button>
+        </div>
+
+        <!-- Resultados -->
+        <div class="results-panel" id="resultsPanel">
+            <h2>⚽ Confronto Formado ⚽</h2>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = '1x1';
+        let players = ['Alisson', 'Neymar', 'Vini Jr', 'Rodrygo', 'Casemiro', 'Paquetá', 'Gabriel', 'Marquinhos'];
+        let teams = ['Brasil', 'Real Madrid', 'Barcelona', 'Man. City', 'Arsenal', 'Bayern', 'PSG', 'Juventus'];
+
+        // Cores para as fatias da roleta (estilo futebol)
+        const colors = ['#2e7d32', '#388e3c', '#43a047', '#4caf50', '#1b5e20', '#a4c2a8'];
+
+        function init() {
+            updateTags('player');
+            updateTags('team');
+            drawWheel('wheelPlayers', players);
+            drawWheel('wheelTeams', teams);
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('btn1x1').classList.toggle('active', mode === '1x1');
+            document.getElementById('btn2x2').classList.toggle('active', mode === '2x2');
+        }
+
+        function handleKeyPress(e, type) {
+            if (e.key === 'Enter') addEntry(type);
+        }
+
+        function addEntry(type) {
+            const input = document.getElementById(type + 'Input');
+            const value = input.value.trim();
+            if (!value) return;
+
+            if (type === 'player') {
+                players.push(value);
+                updateTags('player');
+                drawWheel('wheelPlayers', players);
+            } else {
+                teams.push(value);
+                updateTags('team');
+                drawWheel('wheelTeams', teams);
+            }
+            input.value = '';
+        }
+
+        function removeEntry(type, index) {
+            if (type === 'player') {
+                players.splice(index, 1);
+                updateTags('player');
+                drawWheel('wheelPlayers', players);
+            } else {
+                teams.splice(index, 1);
+                updateTags('team');
+                drawWheel('wheelTeams', teams);
+            }
+        }
+
+        function updateTags(type) {
+            const container = document.getElementById(type === 'player' ? 'playersList' : 'teamsList');
+            const list = type === 'player' ? players : teams;
+            container.innerHTML = '';
+            
+            list.forEach((item, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'tag';
+                tag.innerHTML = `${item} <span onclick="removeEntry('${type}', ${index})">&times;</span>`;
+                container.appendChild(tag);
+            });
+        }
+
+        function drawWheel(canvasId, items) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const numItems = items.length;
+            
+            ctx.clearRect(0, 0, 200, 200);
+            
+            if (numItems === 0) {
+                ctx.fillStyle = '#ccc';
+                ctx.beginPath();
+                ctx.arc(100, 100, 100, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Lista vazia', 100, 105);
+                return;
+            }
+
+            const arcSize = (2 * Math.PI) / numItems;
+
+            for (let i = 0; i < numItems; i++) {
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.beginPath();
+                ctx.moveTo(100, 100);
+                ctx.arc(100, 100, 100, i * arcSize, (i + 1) * arcSize);
+                ctx.lineTo(100, 100);
+                ctx.fill();
+
+                ctx.save();
+                ctx.fillStyle = '#fff';
+                ctx.translate(100, 100);
+                ctx.rotate(i * arcSize + arcSize / 2);
+                ctx.textAlign = 'right';
+                ctx.font = 'bold 12px Arial';
+                
+                let text = items[i];
+                if(text.length > 10) text = text.substring(0,8) + '...';
+                
+                ctx.fillText(text, 90, 5);
+                ctx.restore();
+            }
+        }
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function spinAndDraw() {
+            const reqPlayers = currentMode === '1x1' ? 2 : 4;
+            const reqTeams = currentMode === '1x1' ? 2 : 2;
+
+            if (players.length < reqPlayers || teams.length < reqTeams) {
+                alert(`Para rodar o modo ${currentMode}, restam poucos nomes! Você precisa de pelo menos ${reqPlayers} jogadores e ${reqTeams} times na lista.`);
+                return;
+            }
+
+            // Animação visual de giro rápido
+            const extraDegrees = Math.floor(Math.random() * 360) + 720;
+            document.getElementById('wheelPlayers').style.transform = `rotate(${extraDegrees}deg)`;
+            document.getElementById('wheelTeams').style.transform = `rotate(${-extraDegrees}deg)`;
+
+            setTimeout(() => {
+                // Seleciona os itens misturados
+                const shuffledPlayers = shuffle([...players]);
+                const shuffledTeams = shuffle([...teams]);
+
+                const resultsPanel = document.getElementById('resultsPanel');
+                const resultsContent = document.getElementById('resultsContent');
+                resultsContent.innerHTML = '';
+
+                if (currentMode === '1x1') {
+                    const p1 = shuffledPlayers[0];
+                    const p2 = shuffledPlayers[1];
+                    const t1 = shuffledTeams[0];
+                    const t2 = shuffledTeams[1];
+
+                    resultsContent.innerHTML = `
+                        <div class="matchup">
+                            <div>🏃 <strong>${p1}</strong> <span class="team-box">${t1}</span></div>
+                            <div style="font-weight: bold; margin: 5px 0; color: #f44336;">VS</div>
+                            <div>🏃 <strong>${p2}</strong> <span class="team-box">${t2}</span></div>
+                        </div>
+                    `;
+
+                    // REMOVE os sorteados das listas globais
+                    players = players.filter(p => p !== p1 && p !== p2);
+                    teams = teams.filter(t => t !== t1 && t !== t2);
+
+                } else {
+                    // Modo 2x2
+                    const p1 = shuffledPlayers[0];
+                    const p2 = shuffledPlayers[1];
+                    const p3 = shuffledPlayers[2];
+                    const p4 = shuffledPlayers[3];
+                    const t1 = shuffledTeams[0];
+                    const t2 = shuffledTeams[1];
+
+                    resultsContent.innerHTML = `
+                        <div class="matchup">
+                            <div style="text-align: center;">
+                                👥 <strong>Time A:</strong> ${p1} e ${p2}<br>
+                                <span class="team-box" style="display:inline-block; margin-top:5px;">${t1}</span>
+                            </div>
+                            <div style="font-weight: bold; margin: 8px 0; color: #f44336;">VS</div>
+                            <div style="text-align: center;">
+                                👥 <strong>Time B:</strong> ${p3} e ${p4}<br>
+                                <span class="team-box" style="display:inline-block; margin-top:5px;">${t2}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    // REMOVE os sorteados das listas globais
+                    players = players.filter(p => p !== p1 && p !== p2 && p !== p3 && p !== p4);
+                    teams = teams.filter(t => t !== t1 && t !== t2);
+                }
+
+                // Atualiza a tela e as roletas com os elementos que sobraram
+                updateTags('player');
+                updateTags('team');
+                drawWheel('wheelPlayers', players);
+                drawWheel('wheelTeams', teams);
+
+                resultsPanel.style.display = 'block';
+                
+                // Reseta a rotação física visual
+                setTimeout(() => {
+                    document.getElementById('wheelPlayers').style.transition = 'none';
+                    document.getElementById('wheelTeams').style.transition = 'none';
+                    document.getElementById('wheelPlayers').style.transform = 'rotate(0deg)';
+                    document.getElementById('wheelTeams').style.transform = 'rotate(0deg)';
+                    setTimeout(() => {
+                        document.getElementById('wheelPlayers').style.transition = 'transform 2s cubic-bezier(0.1, 0.8, 0.3, 1)';
+                        document.getElementById('wheelTeams').style.transition = 'transform 2s cubic-bezier(0.1, 0.8, 0.3, 1)';
+                    }, 50);
+                }, 500);
+
+            }, 2000);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
